@@ -198,6 +198,23 @@ def get_allocation(portfolio_id):
     concentration-risk calculation in analytics.py -- allocation and
     risk are closely related, which is worth pointing out if asked why
     this function is used in two different places.
+
+    KNOWN LIMITATION (documented deliberately, not an oversight):
+    Like get_portfolio_value(), this function excludes holdings with no
+    available price from BOTH the numerator and denominator -- weights
+    are calculated only among successfully-priced holdings, not the full
+    portfolio. Unlike get_profit_loss(), this function does NOT include
+    a placeholder row for unpriced holdings, because its output feeds
+    four downstream analytics.py calculations (volatility, concentration,
+    diversification, sector allocation) that all require a clean numeric
+    weight_percent for every row. Introducing None values here would
+    require defensive None-handling in all four of those functions --
+    real scope creep for what should be a display-layer concern. The
+    dashboard instead handles this at presentation time: the pie chart's
+    title dynamically states "(priced holdings only)" whenever
+    get_unpriced_symbols() is non-empty, so the visual is never presented
+    as more complete than it actually is, without touching this
+    function's data contract.
     """
     holdings = db.get_holdings(portfolio_id)
     total_value = get_portfolio_value(portfolio_id)

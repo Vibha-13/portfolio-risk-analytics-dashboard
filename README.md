@@ -133,6 +133,26 @@ While testing, two real gaps were found and fixed:
   (portfolio value, P/L) still correctly exclude unpriced holdings
   numerically — you can't sum an unknown value — but that exclusion is
   now visible to the user instead of silent.
+- **Caching for market data calls** — `get_current_price()`,
+  `get_sector()`, and `get_historical_prices()` were each being called
+  multiple times per page load for the same symbol (once from each of
+  several functions that independently needed the same data), and again
+  on every Streamlit rerun. Added `@st.cache_data` with tiered TTLs —
+  60s for price (needs to feel live), 1 hour for sector (essentially
+  never changes), 5 minutes for historical price series (used only for
+  volatility, doesn't need second-level freshness). Verified with a
+  mocked API call counter: 5 requests for the same symbol now trigger 1
+  real API call instead of 5.
+- **Portfolio allocation consistency** — `get_profit_loss()` now shows
+  unpriced holdings explicitly, but `get_allocation()` (which feeds the
+  pie chart and four analytics.py risk calculations) still silently
+  excludes them, since restructuring its return shape would ripple into
+  those four downstream calculations — real scope creep for what should
+  be a display concern. Instead, fixed at the display layer: the pie
+  chart's title now dynamically states "(priced holdings only)"
+  whenever any holding lacks price data, so the chart is never presented
+  as more complete than it is. This tradeoff is also documented directly
+  in `get_allocation()`'s docstring.
 
 ## Future Improvements
 

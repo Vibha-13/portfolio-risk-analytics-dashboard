@@ -311,7 +311,19 @@ if page == "Dashboard":
     allocation = portfolio.get_allocation(portfolio_id)
     if allocation:
         df = pd.DataFrame(allocation)
-        fig = px.pie(df, names="symbol", values="weight_percent", title="Portfolio Allocation", hole=0.45)
+        # CONSISTENCY FIX: get_allocation() still excludes unpriced
+        # holdings from the pie chart's underlying numbers (a deliberate,
+        # documented choice -- see get_allocation()'s docstring and the
+        # README). Restructuring get_allocation() itself to carry None
+        # weights would ripple into four analytics.py calculations that
+        # all expect clean numeric weights, which is real scope creep for
+        # what should be a display-layer fix. Instead: the chart TITLE
+        # itself now tells the truth about what it's showing, so a
+        # partial allocation is never presented as if it were complete.
+        chart_title = "Portfolio Allocation"
+        if unpriced:
+            chart_title += " (priced holdings only — see warning above)"
+        fig = px.pie(df, names="symbol", values="weight_percent", title=chart_title, hole=0.45)
         st.plotly_chart(style_plotly(fig), use_container_width=True)
     else:
         st.info("Add holdings to see your portfolio allocation.")
