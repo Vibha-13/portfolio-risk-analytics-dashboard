@@ -4,3 +4,4 @@ __pycache__/
 .DS_Store
 portfolio.db
 .streamlit/
+INTERVIEW_GUIDE.md
